@@ -39,7 +39,7 @@ export const ENV = {
   NODE_ENV: getEnvVar('NODE_ENV') || 'development',
   CLIENT_URL: getEnvVar('CLIENT_URL') || 'http://localhost:5173',
   MONGODB_URI:
-    getEnvVar('MONGODB_URI', 'MONGO_URI', 'DATABASE_URL', 'MONGO_URL') ||
+    getEnvVar('MONGODB_URI', 'MONGODB_URL', 'MONGO_URI', 'DATABASE_URL', 'MONGO_URL') ||
     'mongodb://127.0.0.1:27017/stickerforge',
   JWT_SECRET: getEnvVar('JWT_SECRET') || 'stickerforge-dev-secret-key-12345',
   JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN') || '7d',
