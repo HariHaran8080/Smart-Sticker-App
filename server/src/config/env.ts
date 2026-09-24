@@ -3,8 +3,10 @@ import path from 'path';
 
 import fs from 'fs';
 
-// Load .env from root or current working directory
+// Load .env from root, current working directory, or Render secret files
+dotenv.config({ path: '/etc/secrets/.env' });
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config();
 

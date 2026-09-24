@@ -84,6 +84,7 @@ app.get('/health', (req, res) => {
     status: isDbConnected ? 'ok' : 'degraded',
     database: isDbConnected ? 'connected' : 'disconnected',
     databaseTarget: maskedUri,
+    availableEnvKeys: Object.keys(process.env).sort(),
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     storage: ENV.STORAGE_TYPE,
