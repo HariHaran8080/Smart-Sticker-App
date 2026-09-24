@@ -101,8 +101,8 @@ export const startServer = async () => {
   // Connect to Database
   await connectDB();
 
-  return app.listen(ENV.PORT, () => {
-    logger.info(`StickerForge API server running on http://localhost:${ENV.PORT}`);
+  return app.listen(ENV.PORT, '0.0.0.0', () => {
+    logger.info(`StickerForge API server running on port ${ENV.PORT}`);
     logger.info(`Serving uploads from: ${ENV.UPLOAD_DIR}`);
   });
 };

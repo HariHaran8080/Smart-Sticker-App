@@ -23,7 +23,8 @@ export const ENV = {
   PORT: parseInt(process.env.PORT || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
-  MONGODB_URI: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/stickerforge',
+  MONGODB_URI:
+    process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/stickerforge',
   JWT_SECRET: process.env.JWT_SECRET || 'stickerforge-dev-secret-key-12345',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   BACKGROUND_REMOVAL_PROVIDER: (process.env.BACKGROUND_REMOVAL_PROVIDER || 'local').toLowerCase(),
