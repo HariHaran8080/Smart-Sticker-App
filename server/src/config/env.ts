@@ -19,16 +19,30 @@ const resolveDefaultUploadDir = (): string => {
   return path.resolve(process.cwd(), 'uploads');
 };
 
+const getEnvVar = (...keys: string[]): string | undefined => {
+  const normalizedKeys = keys.map((k) => k.trim().toLowerCase());
+  for (const [key, val] of Object.entries(process.env)) {
+    if (val !== undefined && normalizedKeys.includes(key.trim().toLowerCase())) {
+      const cleanVal = val.trim().replace(/^["']|["']$/g, '');
+      if (cleanVal.length > 0) {
+        return cleanVal;
+      }
+    }
+  }
+  return undefined;
+};
+
 export const ENV = {
-  PORT: parseInt(process.env.PORT || '5000', 10),
-  NODE_ENV: process.env.NODE_ENV || 'development',
-  CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
+  PORT: parseInt(getEnvVar('PORT') || '5000', 10),
+  NODE_ENV: getEnvVar('NODE_ENV') || 'development',
+  CLIENT_URL: getEnvVar('CLIENT_URL') || 'http://localhost:5173',
   MONGODB_URI:
-    process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/stickerforge',
-  JWT_SECRET: process.env.JWT_SECRET || 'stickerforge-dev-secret-key-12345',
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
-  BACKGROUND_REMOVAL_PROVIDER: (process.env.BACKGROUND_REMOVAL_PROVIDER || 'local').toLowerCase(),
-  REMOVE_BG_API_KEY: process.env.REMOVE_BG_API_KEY || '',
-  STORAGE_TYPE: process.env.STORAGE_TYPE || 'local',
+    getEnvVar('MONGODB_URI', 'MONGO_URI', 'DATABASE_URL', 'MONGO_URL') ||
+    'mongodb://127.0.0.1:27017/stickerforge',
+  JWT_SECRET: getEnvVar('JWT_SECRET') || 'stickerforge-dev-secret-key-12345',
+  JWT_EXPIRES_IN: getEnvVar('JWT_EXPIRES_IN') || '7d',
+  BACKGROUND_REMOVAL_PROVIDER: (getEnvVar('BACKGROUND_REMOVAL_PROVIDER') || 'local').toLowerCase(),
+  REMOVE_BG_API_KEY: getEnvVar('REMOVE_BG_API_KEY') || '',
+  STORAGE_TYPE: getEnvVar('STORAGE_TYPE') || 'local',
   UPLOAD_DIR: resolveDefaultUploadDir(),
 };

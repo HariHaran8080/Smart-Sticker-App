@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -74,8 +75,15 @@ app.use('/api', generalLimiter);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  const maskedUri = ENV.MONGODB_URI
+    ? ENV.MONGODB_URI.replace(/:([^:@]+)@/, ':****@')
+    : 'NONE';
+
   res.json({
-    status: 'ok',
+    status: isDbConnected ? 'ok' : 'degraded',
+    database: isDbConnected ? 'connected' : 'disconnected',
+    databaseTarget: maskedUri,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     storage: ENV.STORAGE_TYPE,
