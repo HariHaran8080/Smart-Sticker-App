@@ -19,15 +19,42 @@ app.use(
   })
 );
 
-// CORS
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+];
+
+if (ENV.CLIENT_URL) {
+  const configured = ENV.CLIENT_URL.split(',').map((url) => url.trim().replace(/\/$/, ''));
+  for (const url of configured) {
+    if (url && !allowedOrigins.includes(url)) {
+      allowedOrigins.push(url);
+    }
+  }
+}
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow localhost, Vite dev server, and undefined (for curl/mobile)
-      if (!origin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const isAllowed =
+        allowedOrigins.includes(normalizedOrigin) ||
+        (ENV.NODE_ENV !== 'production' &&
+          (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')));
+
+      if (isAllowed) {
         callback(null, true);
       } else {
-        callback(null, true); // Dev-friendly
+        logger.warn(`Blocked by CORS policy: origin "${origin}" not allowed`);
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
       }
     },
     credentials: true,

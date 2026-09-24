@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const rawBaseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '');
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: rawBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
@@ -24,7 +26,6 @@ export function getAssetUrl(path: string | undefined): string {
     return path;
   }
   // In development Vite proxies /uploads; in production with external backend, prefix baseUrl
-  const baseUrl = import.meta.env.VITE_API_URL || '';
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return baseUrl ? `${baseUrl}${cleanPath}` : cleanPath;
+  return rawBaseUrl ? `${rawBaseUrl}${cleanPath}` : cleanPath;
 }

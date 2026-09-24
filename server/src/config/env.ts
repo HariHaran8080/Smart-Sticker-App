@@ -1,9 +1,23 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-// Load .env from root or local directory
+import fs from 'fs';
+
+// Load .env from root or current working directory
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 dotenv.config();
+
+const resolveDefaultUploadDir = (): string => {
+  if (process.env.UPLOAD_DIR) {
+    return path.resolve(process.env.UPLOAD_DIR);
+  }
+  const rootUploads = path.resolve(__dirname, '../../../uploads');
+  if (fs.existsSync(rootUploads)) {
+    return rootUploads;
+  }
+  return path.resolve(process.cwd(), 'uploads');
+};
 
 export const ENV = {
   PORT: parseInt(process.env.PORT || '5000', 10),
@@ -15,7 +29,5 @@ export const ENV = {
   BACKGROUND_REMOVAL_PROVIDER: (process.env.BACKGROUND_REMOVAL_PROVIDER || 'local').toLowerCase(),
   REMOVE_BG_API_KEY: process.env.REMOVE_BG_API_KEY || '',
   STORAGE_TYPE: process.env.STORAGE_TYPE || 'local',
-  UPLOAD_DIR: process.env.UPLOAD_DIR
-    ? path.resolve(process.env.UPLOAD_DIR)
-    : path.resolve(__dirname, '../../../uploads'),
+  UPLOAD_DIR: resolveDefaultUploadDir(),
 };

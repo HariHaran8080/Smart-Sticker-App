@@ -2,6 +2,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { ENV } from '../config/env';
+/**
+ * Local File Storage Service
+ *
+ * NOTE: Local file storage is retained for portfolio and demo deployments.
+ * On ephemeral container platforms (such as Render free tier instances), local storage
+ * functions directly during the active container session. For persistent multi-instance
+ * production environments in the future, cloud object storage (e.g., AWS S3 or Cloudflare R2)
+ * should be used.
+ */
 
 export interface StorageResult {
   filename: string;
