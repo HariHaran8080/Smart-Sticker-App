@@ -16,6 +16,7 @@ import {
   Layers,
   Crop,
   Loader2,
+  Type,
 } from 'lucide-react';
 import { StickerSettings } from '../../types';
 
@@ -50,6 +51,7 @@ export const ObjectInspector: React.FC<ObjectInspectorProps> = ({
 }) => {
   // Accordion open states
   const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
+    text: true,
     shadows: false,
     outline: true,
     reflection: false,
@@ -230,6 +232,329 @@ export const ObjectInspector: React.FC<ObjectInspectorProps> = ({
             )}
             <span>{hasCutout ? 'Refine Cutout' : 'Generate AI Cutout'}</span>
           </button>
+        </div>
+
+        {/* Text & Typography Accordion */}
+        <div className="border border-zinc-800/80 rounded-xl overflow-hidden bg-zinc-900/40">
+          <div
+            onClick={() => toggleSection('text')}
+            className="flex items-center justify-between px-3.5 py-3 cursor-pointer hover:bg-zinc-900/80 transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <Type className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-semibold text-zinc-200">Text & Typography</span>
+            </div>
+
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => toggleSection('text')}
+                className="text-zinc-500 hover:text-zinc-300"
+              >
+                {openSections.text ? (
+                  <ChevronDown className="w-4 h-4" />
+                ) : (
+                  <ChevronRight className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
+
+          {openSections.text && (
+            <div className="p-3.5 pt-0 space-y-3.5 border-t border-zinc-800/60 text-xs">
+              {/* Text Input */}
+              <div className="space-y-1.5 pt-2">
+                <label className="text-[11px] font-medium text-zinc-400">Content</label>
+                <input
+                  type="text"
+                  value={settings.text.content}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, content: e.target.value },
+                    }))
+                  }
+                  placeholder="Caption, quote, meme..."
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+                />
+              </div>
+
+              {/* Style Presets */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-zinc-400">1-Click Presets</label>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: {
+                          ...prev.text,
+                          color: '#ffffff',
+                          strokeColor: '#000000',
+                          strokeWidth: 4,
+                          backgroundColor: 'none',
+                          fontFamily: "'Impact', 'Arial Black', sans-serif",
+                          bold: true,
+                        },
+                      }))
+                    }
+                    className="py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-[11px] font-bold text-white text-center transition-all hover:scale-[1.02]"
+                  >
+                    💥 Meme
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: {
+                          ...prev.text,
+                          color: '#00f0ff',
+                          strokeColor: '#581c87',
+                          strokeWidth: 3,
+                          backgroundColor: 'rgba(0,0,0,0.65)',
+                          fontFamily: "'Trebuchet MS', sans-serif",
+                          bold: true,
+                        },
+                      }))
+                    }
+                    className="py-1.5 px-2 bg-cyan-950/60 hover:bg-cyan-900 border border-cyan-800/60 rounded-lg text-[11px] font-bold text-cyan-300 text-center transition-all hover:scale-[1.02]"
+                  >
+                    ⚡ Neon
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: {
+                          ...prev.text,
+                          color: '#fde047',
+                          strokeColor: '#18181b',
+                          strokeWidth: 4,
+                          backgroundColor: 'none',
+                          fontFamily: "'Comic Sans MS', cursive",
+                          bold: true,
+                        },
+                      }))
+                    }
+                    className="py-1.5 px-2 bg-amber-950/60 hover:bg-amber-900 border border-amber-800/60 rounded-lg text-[11px] font-bold text-amber-300 text-center transition-all hover:scale-[1.02]"
+                  >
+                    🗯️ Comic
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: {
+                          ...prev.text,
+                          color: '#ffffff',
+                          strokeColor: 'transparent',
+                          strokeWidth: 0,
+                          backgroundColor: 'rgba(0,0,0,0.75)',
+                          fontFamily: "'Arial Black', sans-serif",
+                        },
+                      }))
+                    }
+                    className="py-1.5 px-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg text-[11px] font-bold text-brand-300 text-center transition-all hover:scale-[1.02]"
+                  >
+                    🏷️ Pill Badge
+                  </button>
+                </div>
+              </div>
+
+              {/* Font Family */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-zinc-400">Font</label>
+                <select
+                  value={settings.text.fontFamily || "'Impact', 'Arial Black', sans-serif"}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, fontFamily: e.target.value },
+                    }))
+                  }
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-400 cursor-pointer"
+                >
+                  <option value="'Impact', 'Arial Black', sans-serif">Impact (Meme)</option>
+                  <option value="'Arial Black', sans-serif">Arial Black (Bold)</option>
+                  <option value="'Comic Sans MS', cursive">Comic (Playful)</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet (Modern)</option>
+                  <option value="'Georgia', serif">Georgia (Serif)</option>
+                  <option value="'Courier New', monospace">Courier (Monospace)</option>
+                </select>
+              </div>
+
+              {/* Color & Outline */}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-zinc-400">Fill Color</label>
+                  <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg p-1.5">
+                    <input
+                      type="color"
+                      value={settings.text.color}
+                      onChange={(e) =>
+                        onUpdateSettings((prev) => ({
+                          ...prev,
+                          text: { ...prev.text, color: e.target.value },
+                        }))
+                      }
+                      className="w-5 h-5 rounded cursor-pointer bg-transparent border-0"
+                    />
+                    <span className="text-[11px] font-mono text-zinc-400">{settings.text.color}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-medium text-zinc-400">Outline Color</label>
+                  <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded-lg p-1.5">
+                    <input
+                      type="color"
+                      value={settings.text.strokeColor || '#000000'}
+                      onChange={(e) =>
+                        onUpdateSettings((prev) => ({
+                          ...prev,
+                          text: { ...prev.text, strokeColor: e.target.value },
+                        }))
+                      }
+                      className="w-5 h-5 rounded cursor-pointer bg-transparent border-0"
+                    />
+                    <span className="text-[11px] font-mono text-zinc-400">{settings.text.strokeColor || '#000000'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Font Size Slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-400">Font Size</span>
+                  <span className="font-mono text-amber-400">{settings.text.fontSize || 32}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="16"
+                  max="72"
+                  step="2"
+                  value={settings.text.fontSize || 32}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, fontSize: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              {/* Outline Width Slider */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-zinc-400">Outline Thickness</span>
+                  <span className="font-mono text-amber-400">{settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : 3}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : 3}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, strokeWidth: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-full accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                />
+              </div>
+
+              {/* Position Presets */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-medium text-zinc-400">Position Placement</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: { ...prev.text, align: 'top', y: 48 + (prev.text.fontSize || 32), x: 256 },
+                      }))
+                    }
+                    className={`py-1.5 text-center text-[11px] rounded-lg border transition-all ${
+                      settings.text.align === 'top'
+                        ? 'bg-amber-400 text-zinc-950 font-bold border-amber-400'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                    }`}
+                  >
+                    Top
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: { ...prev.text, align: 'center', y: 256, x: 256 },
+                      }))
+                    }
+                    className={`py-1.5 text-center text-[11px] rounded-lg border transition-all ${
+                      settings.text.align === 'center'
+                        ? 'bg-amber-400 text-zinc-950 font-bold border-amber-400'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                    }`}
+                  >
+                    Center
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateSettings((prev) => ({
+                        ...prev,
+                        text: { ...prev.text, align: 'bottom', y: 460, x: 256 },
+                      }))
+                    }
+                    className={`py-1.5 text-center text-[11px] rounded-lg border transition-all ${
+                      settings.text.align === 'bottom'
+                        ? 'bg-amber-400 text-zinc-950 font-bold border-amber-400'
+                        : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:text-white'
+                    }`}
+                  >
+                    Bottom
+                  </button>
+                </div>
+              </div>
+
+              {/* Pill Backdrop Toggle */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-zinc-400">Pill Badge Backdrop</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: {
+                        ...prev.text,
+                        backgroundColor:
+                          prev.text.backgroundColor && prev.text.backgroundColor !== 'none'
+                            ? 'none'
+                            : 'rgba(0,0,0,0.75)',
+                      },
+                    }))
+                  }
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                    settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                      ? 'bg-amber-400/20 border-amber-400 text-amber-300'
+                      : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  {settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                    ? 'Enabled'
+                    : 'Disabled'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 5. Shadows Accordion */}

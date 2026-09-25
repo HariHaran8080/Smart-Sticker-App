@@ -553,12 +553,15 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         }}
       />
 
-      {/* Text Overlay Quick Editor Drawer */}
-      {/* Text Overlay Quick Editor Drawer */}
+      {/* Text Overlay Studio Toolbar - Docked at top so it NEVER overlaps/merges with the sticker */}
       {showTextEditor && (
-        <div className="absolute top-4 z-40 bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 rounded-2xl p-3.5 shadow-2xl flex flex-col gap-2.5 animate-fade-in max-w-xl w-full">
+        <div className="w-full max-w-3xl shrink-0 z-30 mb-2 bg-zinc-900/95 backdrop-blur-xl border border-zinc-800/90 shadow-2xl rounded-2xl p-3 flex flex-col gap-2.5 animate-fade-in">
+          {/* Row 1: Text Content, Font Family, Color, Bold, and Close */}
           <div className="flex items-center gap-2">
-            <Type className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="p-1.5 rounded-lg bg-amber-400/10 border border-amber-400/20 text-amber-400 shrink-0">
+              <Type className="w-4 h-4" />
+            </div>
+
             <input
               type="text"
               value={settings.text.content}
@@ -568,23 +571,43 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                   text: { ...prev.text, content: e.target.value },
                 }))
               }
-              placeholder="Type meme text, caption or quote..."
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+              placeholder="Type meme text, caption or sticker quote..."
+              className="flex-1 bg-zinc-950/70 border border-zinc-700/80 rounded-xl px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/50 transition-all"
               autoFocus
             />
 
-            <input
-              type="color"
-              value={settings.text.color}
+            <select
+              value={settings.text.fontFamily || "'Impact', 'Arial Black', sans-serif"}
               onChange={(e) =>
                 onUpdateSettings((prev) => ({
                   ...prev,
-                  text: { ...prev.text, color: e.target.value },
+                  text: { ...prev.text, fontFamily: e.target.value },
                 }))
               }
-              className="w-7 h-7 rounded cursor-pointer bg-transparent shrink-0"
-              title="Text color"
-            />
+              className="bg-zinc-950/70 border border-zinc-700/80 text-xs text-zinc-200 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-amber-400 cursor-pointer shrink-0"
+            >
+              <option value="'Impact', 'Arial Black', sans-serif">Impact (Meme)</option>
+              <option value="'Arial Black', sans-serif">Arial Black</option>
+              <option value="'Comic Sans MS', cursive">Comic Pop</option>
+              <option value="'Trebuchet MS', sans-serif">Trebuchet Modern</option>
+              <option value="'Georgia', serif">Georgia Serif</option>
+              <option value="'Courier New', monospace">Courier</option>
+            </select>
+
+            <div className="flex items-center gap-1 bg-zinc-950/70 border border-zinc-700/80 rounded-xl px-2 py-1 shrink-0" title="Text Color">
+              <span className="text-[10px] text-zinc-400">Color</span>
+              <input
+                type="color"
+                value={settings.text.color}
+                onChange={(e) =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: { ...prev.text, color: e.target.value },
+                  }))
+                }
+                className="w-5 h-5 rounded cursor-pointer bg-transparent border-0"
+              />
+            </div>
 
             <button
               onClick={() =>
@@ -593,10 +616,10 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                   text: { ...prev.text, bold: !prev.text.bold },
                 }))
               }
-              className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-colors shrink-0 ${
+              className={`px-2.5 py-1 text-xs font-bold rounded-xl border transition-all shrink-0 ${
                 settings.text.bold
-                  ? 'bg-amber-400 text-zinc-950 border-amber-400'
-                  : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:text-white'
+                  ? 'bg-amber-400 text-zinc-950 border-amber-400 shadow-sm'
+                  : 'bg-zinc-950/70 text-zinc-400 border-zinc-700/80 hover:text-white'
               }`}
               title="Toggle Bold"
             >
@@ -605,38 +628,18 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
 
             <button
               onClick={onCloseTextEditor}
-              className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 shrink-0"
+              className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition-colors shrink-0"
+              title="Close Text Toolbar"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Row 2: Font Family & Style Presets */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-400 font-medium">Font:</span>
-              <select
-                value={settings.text.fontFamily || "'Impact', 'Arial Black', sans-serif"}
-                onChange={(e) =>
-                  onUpdateSettings((prev) => ({
-                    ...prev,
-                    text: { ...prev.text, fontFamily: e.target.value },
-                  }))
-                }
-                className="bg-zinc-800 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-400"
-              >
-                <option value="'Impact', 'Arial Black', sans-serif">Impact (Meme)</option>
-                <option value="'Arial Black', sans-serif">Arial Black (Bold)</option>
-                <option value="'Comic Sans MS', cursive">Comic (Playful)</option>
-                <option value="'Trebuchet MS', sans-serif">Trebuchet (Modern)</option>
-                <option value="'Georgia', serif">Georgia (Serif)</option>
-                <option value="'Courier New', monospace">Courier (Typewriter)</option>
-              </select>
-            </div>
-
+          {/* Row 2: Presets, Size, Outline, and Alignments */}
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2 border-t border-zinc-800/80 text-xs">
             {/* Quick 1-click Style Presets */}
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-zinc-400 mr-0.5">Style:</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-zinc-400 font-medium">Style:</span>
               <button
                 onClick={() =>
                   onUpdateSettings((prev) => ({
@@ -652,7 +655,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     },
                   }))
                 }
-                className="px-2 py-0.5 text-[10px] font-bold bg-zinc-800 hover:bg-zinc-700 text-white rounded border border-zinc-700 transition-colors"
+                className="px-2.5 py-1 text-[11px] font-bold bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg border border-zinc-700 transition-all hover:scale-105 active:scale-95"
                 title="Classic White on Black Meme text"
               >
                 Meme
@@ -664,7 +667,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     text: {
                       ...prev.text,
                       color: '#00f0ff',
-                      strokeColor: '#003b46',
+                      strokeColor: '#581c87',
                       strokeWidth: 3,
                       backgroundColor: 'rgba(0,0,0,0.65)',
                       fontFamily: "'Trebuchet MS', sans-serif",
@@ -672,7 +675,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     },
                   }))
                 }
-                className="px-2 py-0.5 text-[10px] font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded border border-cyan-800 transition-colors"
+                className="px-2.5 py-1 text-[11px] font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded-lg border border-cyan-700/60 transition-all hover:scale-105 active:scale-95 shadow-[0_0_10px_rgba(0,240,255,0.15)]"
                 title="Neon Cyan glow with translucent pill"
               >
                 Neon
@@ -684,7 +687,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     text: {
                       ...prev.text,
                       color: '#fde047',
-                      strokeColor: '#b91c1c',
+                      strokeColor: '#18181b',
                       strokeWidth: 4,
                       backgroundColor: 'none',
                       fontFamily: "'Comic Sans MS', cursive",
@@ -692,8 +695,8 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     },
                   }))
                 }
-                className="px-2 py-0.5 text-[10px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 rounded border border-amber-800 transition-colors"
-                title="Comic Pop yellow with red outline"
+                className="px-2.5 py-1 text-[11px] font-bold bg-amber-950/70 hover:bg-amber-900 text-amber-300 rounded-lg border border-amber-700/60 transition-all hover:scale-105 active:scale-95"
+                title="Comic Pop yellow with black outline"
               >
                 Comic
               </button>
@@ -711,16 +714,14 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                     },
                   }))
                 }
-                className="px-2 py-0.5 text-[10px] font-bold bg-zinc-800 hover:bg-zinc-700 text-brand-300 rounded border border-brand-500/40 transition-colors"
+                className="px-2.5 py-1 text-[11px] font-bold bg-zinc-800 hover:bg-zinc-700 text-brand-300 rounded-lg border border-brand-500/40 transition-all hover:scale-105 active:scale-95"
                 title="Studio Pill badge backdrop"
               >
                 Pill Badge
               </button>
             </div>
-          </div>
 
-          {/* Row 3: Size, Stroke, and Position */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
+            {/* Size & Outline Sliders */}
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] text-zinc-400 font-medium">Size:</span>
@@ -736,9 +737,9 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                       text: { ...prev.text, fontSize: Number(e.target.value) },
                     }))
                   }
-                  className="w-20 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-16 sm:w-20 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
-                <span className="text-[11px] font-mono text-amber-400 min-w-[28px]">{settings.text.fontSize || 32}px</span>
+                <span className="text-[10px] font-mono text-amber-400 min-w-[24px]">{settings.text.fontSize || 32}px</span>
               </div>
 
               <div className="flex items-center gap-1.5">
@@ -755,7 +756,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                       text: { ...prev.text, strokeWidth: Number(e.target.value) },
                     }))
                   }
-                  className="w-16 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  className="w-14 sm:w-16 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
                   title="Stroke width"
                 />
                 <input
@@ -767,92 +768,100 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
                       text: { ...prev.text, strokeColor: e.target.value },
                     }))
                   }
-                  className="w-5 h-5 rounded cursor-pointer bg-transparent shrink-0"
+                  className="w-4 h-4 rounded cursor-pointer bg-transparent border-0 shrink-0"
                   title="Outline color"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-zinc-400 mr-1">Position:</span>
-              <button
-                onClick={() =>
-                  onUpdateSettings((prev) => ({
-                    ...prev,
-                    text: { ...prev.text, align: 'top', y: 48 + (prev.text.fontSize || 32), x: 256 },
-                  }))
-                }
-                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
-                  settings.text.align === 'top' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                }`}
-              >
-                Top
-              </button>
-              <button
-                onClick={() =>
-                  onUpdateSettings((prev) => ({
-                    ...prev,
-                    text: { ...prev.text, align: 'center', y: 256, x: 256 },
-                  }))
-                }
-                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
-                  settings.text.align === 'center' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                }`}
-              >
-                Center
-              </button>
-              <button
-                onClick={() =>
-                  onUpdateSettings((prev) => ({
-                    ...prev,
-                    text: { ...prev.text, align: 'bottom', y: 460, x: 256 },
-                  }))
-                }
-                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
-                  settings.text.align === 'bottom' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
-                }`}
-              >
-                Bottom
-              </button>
+            {/* Position Segmented Pills */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-zinc-400 font-medium">Pos:</span>
+              <div className="inline-flex rounded-lg bg-zinc-950/70 p-0.5 border border-zinc-800">
+                <button
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, align: 'top', y: 48 + (prev.text.fontSize || 32), x: 256 },
+                    }))
+                  }
+                  className={`px-2 py-0.5 text-[10px] rounded-md transition-all ${
+                    settings.text.align === 'top'
+                      ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Top
+                </button>
+                <button
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, align: 'center', y: 256, x: 256 },
+                    }))
+                  }
+                  className={`px-2 py-0.5 text-[10px] rounded-md transition-all ${
+                    settings.text.align === 'center'
+                      ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Center
+                </button>
+                <button
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, align: 'bottom', y: 460, x: 256 },
+                    }))
+                  }
+                  className={`px-2 py-0.5 text-[10px] rounded-md transition-all ${
+                    settings.text.align === 'bottom'
+                      ? 'bg-amber-400 text-zinc-950 font-bold shadow-sm'
+                      : 'text-zinc-400 hover:text-white'
+                  }`}
+                >
+                  Bottom
+                </button>
+              </div>
+
               {settings.text.align === 'custom' && (
-                <span className="px-2 py-0.5 text-[11px] bg-brand-500/20 text-brand-300 font-semibold rounded">
-                  Custom Drag
+                <span className="px-2 py-0.5 text-[10px] bg-brand-500/20 text-brand-300 font-semibold rounded-md border border-brand-500/30">
+                  Free Drag
                 </span>
               )}
-            </div>
-          </div>
 
-          <div className="text-[10px] text-amber-300/80 flex items-center justify-between pt-1 border-t border-zinc-800/40">
-            <span>💡 Tip: Click and drag the text anywhere directly on the image!</span>
-            <button
-              onClick={() =>
-                onUpdateSettings((prev) => ({
-                  ...prev,
-                  text: {
-                    ...prev.text,
-                    backgroundColor:
-                      prev.text.backgroundColor && prev.text.backgroundColor !== 'none'
-                        ? 'none'
-                        : 'rgba(0,0,0,0.75)',
-                  },
-                }))
-              }
-              className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
-                settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
-                  ? 'bg-zinc-800 border-amber-400 text-amber-300'
-                  : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white'
-              }`}
-            >
-              {settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
-                ? 'Pill Backdrop: On'
-                : 'Pill Backdrop: Off'}
-            </button>
+              {/* Pill Backdrop Toggle */}
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: {
+                      ...prev.text,
+                      backgroundColor:
+                        prev.text.backgroundColor && prev.text.backgroundColor !== 'none'
+                          ? 'none'
+                          : 'rgba(0,0,0,0.75)',
+                    },
+                  }))
+                }
+                className={`ml-1 px-2 py-0.5 text-[10px] font-medium rounded-lg border transition-all ${
+                  settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                    ? 'bg-amber-400/20 border-amber-400/60 text-amber-300 font-semibold'
+                    : 'bg-zinc-950/70 border-zinc-800 text-zinc-400 hover:text-white'
+                }`}
+              >
+                {settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                  ? 'Pill: On'
+                  : 'Pill: Off'}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Main Canvas Viewport with Zoom Scale */}
-      <div className="flex-1 flex items-center justify-center w-full my-auto">
+      <div className="flex-1 min-h-0 flex items-center justify-center w-full my-auto">
         <div
           style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}
           className="relative transition-transform duration-75 ease-out"
