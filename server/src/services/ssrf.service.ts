@@ -105,9 +105,46 @@ export async function safeFetchImage(imageUrl: string): Promise<{ buffer: Buffer
         }
 
         const rawContentType = (res.headers['content-type'] || '').toLowerCase().split(';')[0].trim();
+
+        // If a user pasted a webpage URL (like Giphy, Tenor, or Imgur page)
+        if (rawContentType.includes('text/html')) {
+          let html = '';
+          res.on('data', (chunk: Buffer) => {
+            html += chunk.toString('utf8');
+            if (html.length > 64 * 1024) {
+              req.destroy();
+            }
+          });
+          res.on('end', () => {
+            const match =
+              html.match(/<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)["'][^>]+content=["']([^"']+)["']/i) ||
+              html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i);
+
+            if (match && match[1]) {
+              try {
+                const resolvedUrl = new URL(match[1], parsedUrl.href).href;
+                return safeFetchImage(resolvedUrl).then(resolve).catch(reject);
+              } catch {
+                // fallback to clear error
+              }
+            }
+
+            reject(
+              new SSRFError(
+                'The link points to a webpage instead of a direct image file. Please right-click the GIF and choose "Copy Image Address" (ending in .gif, .png, or .jpg).'
+              )
+            );
+          });
+          return;
+        }
+
         if (!ALLOWED_MIME_TYPES.includes(rawContentType)) {
           req.destroy();
-          return reject(new SSRFError(`Unsupported content type: ${rawContentType || 'unknown'}. Only PNG, JPG, WEBP, and GIF are allowed.`));
+          return reject(
+            new SSRFError(
+              `Unsupported format: ${rawContentType || 'unknown'}. Only PNG, JPG, WEBP, and GIF images are supported.`
+            )
+          );
         }
 
         const contentLength = parseInt(res.headers['content-length'] || '0', 10);

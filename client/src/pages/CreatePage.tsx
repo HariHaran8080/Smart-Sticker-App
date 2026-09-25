@@ -196,7 +196,9 @@ export const CreatePage: React.FC = () => {
                 </div>
                 <p className="text-xs text-zinc-600 mt-2 flex items-start gap-1">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                  <span>For best results, provide a direct URL ending in .png, .jpg, or .webp.</span>
+                  <span>
+                    Must be a direct image URL (ending in .gif, .png, .jpg, or .webp). For Giphy/Tenor, right-click the GIF and choose <strong>"Copy Image Address"</strong>.
+                  </span>
                 </p>
               </div>
 
