@@ -38,6 +38,7 @@ interface EditorTopBarProps {
   onUpdateSettings: (updater: (prev: StickerSettings) => StickerSettings) => void;
   onSave: () => void;
   onDownload: () => void;
+  onSaveChanges?: () => void;
   isSaving: boolean;
   isDownloading: boolean;
   zoom: number;
@@ -62,6 +63,7 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
   onUpdateSettings,
   onSave,
   onDownload,
+  onSaveChanges,
   isSaving,
   isDownloading,
   zoom,
@@ -415,18 +417,31 @@ export const EditorTopBar: React.FC<EditorTopBarProps> = ({
           <span>Download</span>
         </button>
 
-        {/* Save to Library */}
+        {/* Save Changes Button */}
+        {onSaveChanges && (
+          <button
+            onClick={onSaveChanges}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-800 border border-zinc-700/80 hover:border-brand-500/50 rounded-lg shadow-sm transition-all"
+            title="Save current modifications and canvas changes"
+          >
+            <Check className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Save Changes</span>
+          </button>
+        )}
+
+        {/* Save to Collection */}
         <button
           onClick={onSave}
           disabled={isSaving}
           className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 rounded-lg transition-colors"
+          title="Save sticker to your collection library"
         >
           {isSaving ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
           ) : (
             <Bookmark className="w-3.5 h-3.5 text-brand-400" />
           )}
-          <span>Save</span>
+          <span>Save to Collection</span>
         </button>
 
         {/* Mobile Tools / Inspector Drawer Toggle */}

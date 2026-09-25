@@ -60,20 +60,21 @@ export const stickerService = {
     const fullUrl = getAssetUrl(url);
 
     try {
-      const token = localStorage.getItem('stickerforge_token');
-      const headers: Record<string, string> = {
-        Accept: 'image/png, image/webp, image/*, */*',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+      // Primary: Use axios api instance with configured base URL and authentication
+      const res = await api.get(url, {
+        responseType: 'blob',
+        headers: {
+          Accept: 'image/png, image/webp, image/*, */*',
+        },
+      });
+
+      const blob: Blob = res.data;
+
+      // Fail-safe validation: Ensure the downloaded blob is NOT an HTML error/fallback page
+      if (blob.type && blob.type.includes('text/html')) {
+        throw new Error('Server returned an HTML page instead of an image.');
       }
 
-      const res = await fetch(fullUrl, { headers });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: Failed to download sticker file`);
-      }
-
-      const blob = await res.blob();
       const mimeType = filename.toLowerCase().endsWith('.png') ? 'image/png' : 'image/webp';
       const fileBlob = new Blob([blob], { type: mimeType });
       const objectUrl = window.URL.createObjectURL(fileBlob);
@@ -86,15 +87,36 @@ export const stickerService = {
       document.body.removeChild(a);
 
       setTimeout(() => window.URL.revokeObjectURL(objectUrl), 3000);
-    } catch (err) {
-      console.warn('Direct blob download failed, falling back to anchor navigation:', err);
+    } catch (err: any) {
+      console.warn('Axios blob download failed, trying fetch fallback:', err);
+      // Secondary fallback via direct fetch with full backend URL
+      const fetchRes = await fetch(fullUrl, {
+        headers: {
+          Accept: 'image/png, image/webp, image/*, */*',
+        },
+      });
+
+      if (!fetchRes.ok) {
+        throw new Error(`Download failed with status ${fetchRes.status}`);
+      }
+
+      const blob = await fetchRes.blob();
+      if (blob.type && blob.type.includes('text/html')) {
+        throw new Error('Received HTML response instead of image');
+      }
+
+      const mimeType = filename.toLowerCase().endsWith('.png') ? 'image/png' : 'image/webp';
+      const fileBlob = new Blob([blob], { type: mimeType });
+      const objectUrl = window.URL.createObjectURL(fileBlob);
+
       const a = document.createElement('a');
-      a.href = fullUrl;
+      a.href = objectUrl;
       a.download = filename;
-      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+
+      setTimeout(() => window.URL.revokeObjectURL(objectUrl), 3000);
     }
   },
 };

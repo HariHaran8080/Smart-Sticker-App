@@ -319,6 +319,12 @@ export const EditorPage: React.FC = () => {
     }
   };
 
+  // Explicit Save Changes button
+  const handleSaveChanges = () => {
+    pushHistory(settings);
+    success('Sticker changes saved successfully!');
+  };
+
   return (
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-zinc-950 text-white overflow-hidden">
       {/* Hidden File Input for Insert/Replace */}
@@ -345,6 +351,7 @@ export const EditorPage: React.FC = () => {
         onUpdateSettings={handleUpdateSettings}
         onSave={handleSaveToAccount}
         onDownload={handleDownload}
+        onSaveChanges={handleSaveChanges}
         isSaving={isSaving}
         isDownloading={isDownloading}
         zoom={zoom}

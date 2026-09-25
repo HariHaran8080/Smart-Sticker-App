@@ -138,13 +138,14 @@ export const ObjectInspector: React.FC<ObjectInspectorProps> = ({
             onClick={onSave}
             disabled={isSaving}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-200 hover:text-white bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded-lg shadow-sm transition-colors"
+            title="Save sticker to your collection library"
           >
             {isSaving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin text-brand-400" />
             ) : (
               <Bookmark className="w-3.5 h-3.5 text-brand-400" />
             )}
-            <span>Save</span>
+            <span>Save to Collection</span>
           </button>
         </div>
       </div>

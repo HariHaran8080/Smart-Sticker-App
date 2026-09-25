@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const rawBaseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '');
+const rawBaseUrl = (
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.PROD ? 'https://smart-sticker-app-7u16.onrender.com' : '')
+).trim().replace(/\/$/, '');
 
 export const api = axios.create({
   baseURL: rawBaseUrl,
