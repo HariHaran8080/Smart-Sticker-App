@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
+import sharp from 'sharp';
 import { imageService } from '../services/image.service';
 import { storageService } from '../services/storage.service';
 import { backgroundRemovalService } from '../services/backgroundRemoval.service';
@@ -147,7 +148,7 @@ export class StickerController {
           id: savedStickerDoc ? savedStickerDoc._id : null,
           name: name || 'My Sticker',
           stickerUrl: saved.publicUrl,
-          downloadUrl: `/api/stickers/${savedStickerDoc ? savedStickerDoc._id : 'temp'}/download?file=${encodeURIComponent(saved.publicUrl)}&name=${encodeURIComponent(name || 'sticker')}`,
+          downloadUrl: `/api/stickers/${savedStickerDoc ? savedStickerDoc._id : 'temp'}/download?file=${encodeURIComponent(saved.publicUrl)}&name=${encodeURIComponent(name || 'sticker')}&format=${stickerResult.format}`,
           format: stickerResult.format,
           width: stickerResult.width,
           height: stickerResult.height,
@@ -281,7 +282,7 @@ export class StickerController {
     const { id } = req.params;
     let filePath: string | null = null;
     let fileName: string = 'sticker';
-    let format: string = 'webp';
+    let format: string = (req.query.format as string) || 'webp';
 
     try {
       if (id !== 'temp') {
@@ -289,15 +290,17 @@ export class StickerController {
         if (sticker) {
           filePath = sticker.stickerImage;
           fileName = sticker.name;
-          format = sticker.format;
+          format = (req.query.format as string) || sticker.format || format;
         }
       }
 
       // Fallback query parameters for guest downloads
       if (!filePath && req.query.file) {
         filePath = req.query.file as string;
-        fileName = (req.query.name as string) || 'sticker';
-        format = filePath.endsWith('.png') ? 'png' : 'webp';
+        fileName = (req.query.name as string) || fileName;
+        if (!req.query.format) {
+          format = filePath.endsWith('.png') ? 'png' : 'webp';
+        }
       }
 
       if (!filePath) {
@@ -305,11 +308,20 @@ export class StickerController {
         return;
       }
 
-      const buffer = await storageService.readFile(filePath);
+      let buffer = await storageService.readFile(filePath);
+
+      // On-the-fly format conversion if requested format differs from stored file
+      if (format === 'png' && !filePath.toLowerCase().endsWith('.png')) {
+        buffer = await sharp(buffer).png({ compressionLevel: 8 }).toBuffer();
+      } else if (format === 'webp' && !filePath.toLowerCase().endsWith('.webp')) {
+        buffer = await sharp(buffer).webp({ quality: 90 }).toBuffer();
+      }
+
       const safeName = fileName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 
       res.setHeader('Content-Disposition', `attachment; filename="${safeName}.${format}"`);
       res.setHeader('Content-Type', format === 'png' ? 'image/png' : 'image/webp');
+      res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition');
       res.send(buffer);
     } catch (err: any) {
       res.status(500).json({ success: false, message: 'Error downloading sticker', error: err.message });

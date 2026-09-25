@@ -282,9 +282,10 @@ export const EditorPage: React.FC = () => {
         settings,
       });
 
-      const filename = `${stickerName.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}.${res.format}`;
-      stickerService.triggerDownload(res.downloadUrl, filename);
-      success('Sticker generated & downloaded in high quality!');
+      const effectiveFormat = res.format || settings.exportFormat || 'png';
+      const filename = `${stickerName.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}.${effectiveFormat}`;
+      await stickerService.triggerDownload(res.downloadUrl, filename);
+      success(`Sticker downloaded as high quality ${effectiveFormat.toUpperCase()}!`);
     } catch (err: any) {
       error(err.response?.data?.message || 'Failed to generate sticker for download');
     } finally {
