@@ -292,36 +292,56 @@ export class ImageService {
       );
     }
 
-    // Get current dimensions
+    // 4. Target sizing (WhatsApp / Telegram 512x512 standard or Discord 128x128)
+    const targetSize = settings.targetSize !== undefined ? settings.targetSize : 512;
+    const bgOpt =
+      settings.canvasBackground && settings.canvasBackground.type === 'solid' && settings.canvasBackground.color
+        ? settings.canvasBackground.color
+        : { r: 0, g: 0, b: 0, alpha: 0 };
+
+    if (targetSize > 0) {
+      buffer = await sharp(buffer)
+        .resize({
+          width: targetSize,
+          height: targetSize,
+          fit: 'contain',
+          background: bgOpt,
+        })
+        .png()
+        .toBuffer();
+    }
+
+    // Get current dimensions of base canvas
     const meta = await sharp(buffer).metadata();
     const curWidth = meta.width || 512;
     const curHeight = meta.height || 512;
+    const scaleRatio = curWidth / 512;
 
     const composites: sharp.OverlayOptions[] = [];
 
-    // 4. Text overlay via SVG
+    // 5. Text overlay via SVG
     if (settings.text && settings.text.content && settings.text.content.trim()) {
       const text = settings.text.content.trim();
-      const fontSize = Math.max(16, settings.text.fontSize || 32);
+      const fontSize = Math.max(12, Math.round((settings.text.fontSize || 32) * scaleRatio));
       const fontWeight = settings.text.bold ? 'bold' : 'normal';
       const textColor = settings.text.color || '#ffffff';
       const align = settings.text.align || 'bottom';
 
       let xPos = Math.floor(curWidth / 2);
       if (settings.text.x !== undefined) {
-        xPos = Math.round((settings.text.x / 512) * curWidth);
+        xPos = Math.round(settings.text.x * scaleRatio);
       }
 
       let yPos = curHeight - fontSize - 20;
       if (settings.text.y !== undefined) {
-        yPos = Math.round((settings.text.y / 512) * curHeight);
+        yPos = Math.round(settings.text.y * scaleRatio);
       } else if (align === 'top') {
         yPos = fontSize + 20;
       } else if (align === 'center') {
         yPos = Math.floor(curHeight / 2);
       }
       if (settings.text.customY !== undefined && settings.text.y === undefined) {
-        yPos = settings.text.customY;
+        yPos = Math.round(settings.text.customY * scaleRatio);
       }
 
       // Escape XML characters
@@ -334,7 +354,8 @@ export class ImageService {
 
       const font = settings.text.fontFamily || "'Impact', 'Arial Black', -apple-system, sans-serif";
       const strokeColor = settings.text.strokeColor !== undefined ? settings.text.strokeColor : '#000000';
-      const strokeWidth = settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : Math.max(2, Math.round(fontSize * 0.1));
+      const rawStrokeWidth = settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : Math.max(2, Math.round(fontSize * 0.1));
+      const strokeWidth = Math.round(rawStrokeWidth * scaleRatio);
 
       const bgPill =
         settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
@@ -342,7 +363,7 @@ export class ImageService {
           : '';
 
       const svgText = `
-        <svg width="${curWidth}" height="${curHeight}" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${curWidth}" height="${curHeight}" viewBox="0 0 ${curWidth} ${curHeight}" xmlns="http://www.w3.org/2000/svg">
           <style>
             .sticker-text {
               font-family: ${font};
@@ -367,10 +388,10 @@ export class ImageService {
       });
     }
 
-    // 5. Emoji overlay via SVG
+    // 6. Emoji overlay via SVG
     if (settings.emoji && settings.emoji.symbol && settings.emoji.symbol.trim()) {
       const emoji = settings.emoji.symbol.trim();
-      const emojiSize = settings.emoji.size || 48;
+      const emojiSize = Math.round((settings.emoji.size || 48) * scaleRatio);
       const pos = settings.emoji.position || 'top-right';
 
       let x = curWidth - emojiSize - 20;
@@ -391,7 +412,7 @@ export class ImageService {
       }
 
       const svgEmoji = `
-        <svg width="${curWidth}" height="${curHeight}" xmlns="http://www.w3.org/2000/svg">
+        <svg width="${curWidth}" height="${curHeight}" viewBox="0 0 ${curWidth} ${curHeight}" xmlns="http://www.w3.org/2000/svg">
           <text x="${x}" y="${y}" font-size="${emojiSize}px" text-anchor="${pos === 'center' ? 'middle' : 'start'}">
             ${emoji}
           </text>
@@ -409,22 +430,6 @@ export class ImageService {
     let compositePipeline = sharp(buffer);
     if (composites.length > 0) {
       compositePipeline = compositePipeline.composite(composites);
-    }
-
-    // 6. Target sizing (WhatsApp / Telegram 512x512 standard or Discord 128x128)
-    const targetSize = settings.targetSize !== undefined ? settings.targetSize : 512;
-    const bgOpt =
-      settings.canvasBackground && settings.canvasBackground.type === 'solid' && settings.canvasBackground.color
-        ? settings.canvasBackground.color
-        : { r: 0, g: 0, b: 0, alpha: 0 };
-
-    if (targetSize > 0) {
-      compositePipeline = compositePipeline.resize({
-        width: targetSize,
-        height: targetSize,
-        fit: 'contain',
-        background: bgOpt,
-      });
     }
 
     if (settings.canvasBackground && settings.canvasBackground.type === 'solid' && settings.canvasBackground.color) {

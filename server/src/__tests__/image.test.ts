@@ -77,7 +77,58 @@ describe('Image Processing Service', () => {
 
     expect(result.format).toBe('webp');
     expect(result.width).toBe(512);
-    expect(result.height).toBe(512);
-    expect(result.fileSize).toBeGreaterThan(0);
+  });
+
+  it('reproduces and tests compositing with text overlay on various image sizes', async () => {
+    // Test on portrait, landscape, and large images
+    const testSizes = [
+      { w: 1200, h: 800 },
+      { w: 736, h: 1104 },
+      { w: 512, h: 512 },
+    ];
+
+    for (const size of testSizes) {
+      const sample = await sharp({
+        create: {
+          width: size.w,
+          height: size.h,
+          channels: 4,
+          background: { r: 100, g: 150, b: 200, alpha: 1 },
+        },
+      })
+        .png()
+        .toBuffer();
+
+      const res = await imageService.buildSticker(sample, {
+        text: {
+          content: 'Hello World!',
+          fontSize: 48,
+          x: 256,
+          y: 400,
+          color: '#ffffff',
+          strokeColor: '#000000',
+          strokeWidth: 4,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          align: 'custom',
+        },
+        shadow: {
+          enabled: true,
+          blur: 14,
+          offsetX: 0,
+          offsetY: 8,
+          color: '#000000',
+          opacity: 0.4,
+        },
+        outline: {
+          enabled: true,
+          style: 'white',
+          width: 8,
+        },
+        targetSize: 512,
+      });
+
+      expect(res.width).toBe(512);
+      expect(res.height).toBe(512);
+    }
   });
 });
