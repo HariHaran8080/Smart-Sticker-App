@@ -43,6 +43,9 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isRotating, setIsRotating] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [isDraggingText, setIsDraggingText] = useState(false);
+  const [textDragStart, setTextDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [startTextPos, setStartTextPos] = useState<{ x: number; y: number }>({ x: 256, y: 460 });
   const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [startSettings, setStartSettings] = useState<{
     pos: { x: number; y: number };
@@ -203,19 +206,25 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
       ctx.font = `${settings.text.bold ? 'bold ' : ''}${fontSize}px 'Impact', 'Arial Black', sans-serif`;
       ctx.textAlign = 'center';
 
+      let textX = settings.text.x !== undefined ? settings.text.x : size / 2;
       let textY = size - 32;
-      if (settings.text.align === 'top') textY = 48 + fontSize;
-      if (settings.text.align === 'center') textY = size / 2 + fontSize / 3;
+      if (settings.text.y !== undefined) {
+        textY = settings.text.y;
+      } else if (settings.text.align === 'top') {
+        textY = 48 + fontSize;
+      } else if (settings.text.align === 'center') {
+        textY = size / 2 + fontSize / 3;
+      }
 
       // Stroke
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = Math.max(3, fontSize * 0.12);
       ctx.lineJoin = 'round';
-      ctx.strokeText(settings.text.content, size / 2, textY);
+      ctx.strokeText(settings.text.content, textX, textY);
 
       // Fill
       ctx.fillStyle = settings.text.color || '#ffffff';
-      ctx.fillText(settings.text.content, size / 2, textY);
+      ctx.fillText(settings.text.content, textX, textY);
       ctx.restore();
     }
 
@@ -326,10 +335,63 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     });
   };
 
+  // Text drag start handlers
+  const handleMouseDownText = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setIsDraggingText(true);
+    setTextDragStart({ x: e.clientX, y: e.clientY });
+    const currentX = settings.text.x !== undefined ? settings.text.x : 256;
+    let currentY = 460;
+    if (settings.text.y !== undefined) {
+      currentY = settings.text.y;
+    } else if (settings.text.align === 'top') {
+      currentY = 48 + (settings.text.fontSize || 32);
+    } else if (settings.text.align === 'center') {
+      currentY = 256;
+    }
+    setStartTextPos({ x: currentX, y: currentY });
+  };
+
+  const handleTouchStartText = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    setIsDraggingText(true);
+    setTextDragStart({ x: touch.clientX, y: touch.clientY });
+    const currentX = settings.text.x !== undefined ? settings.text.x : 256;
+    let currentY = 460;
+    if (settings.text.y !== undefined) {
+      currentY = settings.text.y;
+    } else if (settings.text.align === 'top') {
+      currentY = 48 + (settings.text.fontSize || 32);
+    } else if (settings.text.align === 'center') {
+      currentY = 256;
+    }
+    setStartTextPos({ x: currentX, y: currentY });
+  };
+
   // Global Mouse move listener
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
-      if (isDragging) {
+      if (isDraggingText) {
+        const canvas = canvasRef.current;
+        const rect = canvas ? canvas.getBoundingClientRect() : { width: 440, height: 440 };
+        const factor = (512 / (rect.width || 440)) / zoom;
+        const dx = (e.clientX - textDragStart.x) * factor;
+        const dy = (e.clientY - textDragStart.y) * factor;
+        const newX = Math.round(Math.max(20, Math.min(492, startTextPos.x + dx)));
+        const newY = Math.round(Math.max(20, Math.min(492, startTextPos.y + dy)));
+        onUpdateSettings((prev) => ({
+          ...prev,
+          text: {
+            ...prev.text,
+            x: newX,
+            y: newY,
+            align: 'custom',
+          },
+        }));
+      } else if (isDragging) {
         const dx = (e.clientX - dragStart.x) / zoom;
         const dy = (e.clientY - dragStart.y) / zoom;
         onUpdateSettings((prev) => ({
@@ -357,7 +419,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         }));
       }
     },
-    [isDragging, isRotating, isResizing, dragStart, startSettings, zoom, onUpdateSettings]
+    [isDragging, isDraggingText, isRotating, isResizing, dragStart, textDragStart, startSettings, startTextPos, zoom, onUpdateSettings]
   );
 
   // Global Touch move listener
@@ -365,7 +427,25 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
       const touch = e.touches[0];
-      if (isDragging) {
+      if (isDraggingText) {
+        if (e.cancelable) e.preventDefault();
+        const canvas = canvasRef.current;
+        const rect = canvas ? canvas.getBoundingClientRect() : { width: 440, height: 440 };
+        const factor = (512 / (rect.width || 440)) / zoom;
+        const dx = (touch.clientX - textDragStart.x) * factor;
+        const dy = (touch.clientY - textDragStart.y) * factor;
+        const newX = Math.round(Math.max(20, Math.min(492, startTextPos.x + dx)));
+        const newY = Math.round(Math.max(20, Math.min(492, startTextPos.y + dy)));
+        onUpdateSettings((prev) => ({
+          ...prev,
+          text: {
+            ...prev.text,
+            x: newX,
+            y: newY,
+            align: 'custom',
+          },
+        }));
+      } else if (isDragging) {
         if (e.cancelable) e.preventDefault();
         const dx = (touch.clientX - dragStart.x) / zoom;
         const dy = (touch.clientY - dragStart.y) / zoom;
@@ -396,17 +476,18 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         }));
       }
     },
-    [isDragging, isRotating, isResizing, dragStart, startSettings, zoom, onUpdateSettings]
+    [isDragging, isDraggingText, isRotating, isResizing, dragStart, textDragStart, startSettings, startTextPos, zoom, onUpdateSettings]
   );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
     setIsRotating(false);
     setIsResizing(null);
+    setIsDraggingText(false);
   }, []);
 
   useEffect(() => {
-    if (isDragging || isRotating || isResizing) {
+    if (isDragging || isRotating || isResizing || isDraggingText) {
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
       window.addEventListener('touchmove', handleTouchMove, { passive: false });
@@ -418,7 +499,7 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         window.removeEventListener('touchend', handleMouseUp);
       };
     }
-  }, [isDragging, isRotating, isResizing, handleMouseMove, handleTouchMove, handleMouseUp]);
+  }, [isDragging, isRotating, isResizing, isDraggingText, handleMouseMove, handleTouchMove, handleMouseUp]);
 
   // AI Prompt submission
   const handleAiSubmit = (e?: React.FormEvent) => {
@@ -447,57 +528,135 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
       />
 
       {/* Text Overlay Quick Editor Drawer */}
+      {/* Text Overlay Quick Editor Drawer */}
       {showTextEditor && (
-        <div className="absolute top-4 z-40 bg-zinc-900 border border-zinc-700/80 rounded-xl p-3 shadow-2xl flex items-center gap-3 animate-fade-in max-w-lg w-full">
-          <Type className="w-4 h-4 text-amber-400 shrink-0" />
-          <input
-            type="text"
-            value={settings.text.content}
-            onChange={(e) =>
-              onUpdateSettings((prev) => ({
-                ...prev,
-                text: { ...prev.text, content: e.target.value },
-              }))
-            }
-            placeholder="Type meme text, caption or quote..."
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
-            autoFocus
-          />
+        <div className="absolute top-4 z-40 bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 rounded-2xl p-3.5 shadow-2xl flex flex-col gap-2.5 animate-fade-in max-w-xl w-full">
+          <div className="flex items-center gap-2">
+            <Type className="w-4 h-4 text-amber-400 shrink-0" />
+            <input
+              type="text"
+              value={settings.text.content}
+              onChange={(e) =>
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  text: { ...prev.text, content: e.target.value },
+                }))
+              }
+              placeholder="Type meme text, caption or quote..."
+              className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+              autoFocus
+            />
 
-          <select
-            value={settings.text.align}
-            onChange={(e) =>
-              onUpdateSettings((prev) => ({
-                ...prev,
-                text: { ...prev.text, align: e.target.value as any },
-              }))
-            }
-            className="bg-zinc-800 border border-zinc-700 text-xs text-zinc-300 rounded-lg px-2 py-1.5"
-          >
-            <option value="bottom">Bottom</option>
-            <option value="top">Top</option>
-            <option value="center">Center</option>
-          </select>
+            <input
+              type="color"
+              value={settings.text.color}
+              onChange={(e) =>
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  text: { ...prev.text, color: e.target.value },
+                }))
+              }
+              className="w-7 h-7 rounded cursor-pointer bg-transparent shrink-0"
+              title="Text color"
+            />
 
-          <input
-            type="color"
-            value={settings.text.color}
-            onChange={(e) =>
-              onUpdateSettings((prev) => ({
-                ...prev,
-                text: { ...prev.text, color: e.target.value },
-              }))
-            }
-            className="w-7 h-7 rounded cursor-pointer bg-transparent"
-            title="Text color"
-          />
+            <button
+              onClick={() =>
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  text: { ...prev.text, bold: !prev.text.bold },
+                }))
+              }
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-colors shrink-0 ${
+                settings.text.bold
+                  ? 'bg-amber-400 text-zinc-950 border-amber-400'
+                  : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:text-white'
+              }`}
+              title="Toggle Bold"
+            >
+              B
+            </button>
 
-          <button
-            onClick={onCloseTextEditor}
-            className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800"
-          >
-            <X className="w-4 h-4" />
-          </button>
+            <button
+              onClick={onCloseTextEditor}
+              className="p-1 text-zinc-400 hover:text-white rounded-lg hover:bg-zinc-800 shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Row 2: Font Size Slider + Presets + Drag anywhere tip */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-800/80 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-zinc-400 font-medium">Size:</span>
+              <input
+                type="range"
+                min="16"
+                max="72"
+                step="2"
+                value={settings.text.fontSize || 32}
+                onChange={(e) =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: { ...prev.text, fontSize: Number(e.target.value) },
+                  }))
+                }
+                className="w-24 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+              />
+              <span className="text-[11px] font-mono text-amber-400">{settings.text.fontSize || 32}px</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-zinc-400 mr-1">Position:</span>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: { ...prev.text, align: 'top', y: 48 + (prev.text.fontSize || 32), x: 256 },
+                  }))
+                }
+                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                  settings.text.align === 'top' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                }`}
+              >
+                Top
+              </button>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: { ...prev.text, align: 'center', y: 256, x: 256 },
+                  }))
+                }
+                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                  settings.text.align === 'center' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                }`}
+              >
+                Center
+              </button>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: { ...prev.text, align: 'bottom', y: 460, x: 256 },
+                  }))
+                }
+                className={`px-2 py-0.5 text-[11px] rounded transition-colors ${
+                  settings.text.align === 'bottom' ? 'bg-amber-400 text-zinc-950 font-semibold' : 'bg-zinc-800 text-zinc-400 hover:text-white'
+                }`}
+              >
+                Bottom
+              </button>
+              {settings.text.align === 'custom' && (
+                <span className="px-2 py-0.5 text-[11px] bg-brand-500/20 text-brand-300 font-semibold rounded">
+                  Custom Drag
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="text-[10px] text-amber-300/80 flex items-center gap-1">
+            <span>💡 Tip: Click and drag the text anywhere directly on the image!</span>
+          </div>
         </div>
       )}
 
@@ -514,6 +673,27 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             }`}
           >
             <canvas ref={canvasRef} className="w-full h-full object-contain pointer-events-none" />
+
+            {/* Draggable Text Target Overlay */}
+            {settings.text.content && settings.text.content.trim() && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: `${((settings.text.x !== undefined ? settings.text.x : 256) / 512) * 100}%`,
+                  top: `${((settings.text.y !== undefined ? settings.text.y : (settings.text.align === 'top' ? 48 + (settings.text.fontSize || 32) : settings.text.align === 'center' ? 256 : 460)) / 512) * 100}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+                onMouseDown={handleMouseDownText}
+                onTouchStart={handleTouchStartText}
+                className="group/text pointer-events-auto cursor-move select-none z-20 px-3 py-1.5 rounded-lg border-2 border-dashed border-amber-400/50 hover:border-amber-400 hover:bg-amber-400/10 active:border-amber-400 transition-all flex items-center justify-center touch-none shadow-md"
+                title="Click and drag to position text anywhere!"
+              >
+                <div className="opacity-0 group-hover/text:opacity-100 absolute -top-6 left-1/2 -translate-x-1/2 bg-zinc-900/90 text-[10px] text-amber-300 font-semibold px-2 py-0.5 rounded shadow pointer-events-none whitespace-nowrap transition-opacity flex items-center gap-1 border border-zinc-700">
+                  <span>Drag text anywhere</span>
+                </div>
+                <div className="min-w-[60px] min-h-[20px]" />
+              </div>
+            )}
 
             {/* Background Removal Spinner Overlay */}
             {isRemovingBg && (
@@ -543,10 +723,41 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             <div className="w-full h-full border border-brand-500/90 rounded-lg relative pointer-events-none shadow-[0_0_15px_rgba(0,223,129,0.35)]">
               {/* Floating Action Pill directly above the object */}
               <div
-                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-zinc-900/90 backdrop-blur-md border border-zinc-700/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto opacity-90 hover:opacity-100 transition-opacity"
+                className="absolute -top-11 left-1/2 -translate-x-1/2 bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 rounded-full px-2.5 py-1 flex items-center gap-1.5 shadow-xl pointer-events-auto opacity-90 hover:opacity-100 transition-opacity"
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
               >
+                {/* Quick scale controls */}
+                <button
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      scale: Math.max(0.2, Number((prev.scale - 0.1).toFixed(2))),
+                    }))
+                  }
+                  className="px-1.5 py-0.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors"
+                  title="Scale down sticker"
+                >
+                  -
+                </button>
+                <span className="text-[11px] font-mono font-medium text-brand-400 min-w-[34px] text-center" title="Sticker size">
+                  {Math.round(settings.scale * 100)}%
+                </span>
+                <button
+                  onClick={() =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      scale: Math.min(2.5, Number((prev.scale + 0.1).toFixed(2))),
+                    }))
+                  }
+                  className="px-1.5 py-0.5 text-xs font-bold text-zinc-400 hover:text-white hover:bg-zinc-800 rounded transition-colors"
+                  title="Scale up sticker"
+                >
+                  +
+                </button>
+
+                <div className="h-3 w-px bg-zinc-700" />
+
                 <button
                   onClick={() =>
                     onUpdateSettings((prev) => ({

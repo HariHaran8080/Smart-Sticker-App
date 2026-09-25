@@ -29,7 +29,9 @@ export interface StickerSettings {
     fontSize: number;
     color: string;
     bold: boolean;
-    align: 'top' | 'center' | 'bottom';
+    align: 'top' | 'center' | 'bottom' | 'custom';
+    x?: number;
+    y?: number;
     customY?: number;
   };
   emoji: {

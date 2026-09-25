@@ -307,10 +307,22 @@ export class ImageService {
       const textColor = settings.text.color || '#ffffff';
       const align = settings.text.align || 'bottom';
 
+      let xPos = Math.floor(curWidth / 2);
+      if (settings.text.x !== undefined) {
+        xPos = Math.round((settings.text.x / 512) * curWidth);
+      }
+
       let yPos = curHeight - fontSize - 20;
-      if (align === 'top') yPos = fontSize + 20;
-      if (align === 'center') yPos = Math.floor(curHeight / 2);
-      if (settings.text.customY !== undefined) yPos = settings.text.customY;
+      if (settings.text.y !== undefined) {
+        yPos = Math.round((settings.text.y / 512) * curHeight);
+      } else if (align === 'top') {
+        yPos = fontSize + 20;
+      } else if (align === 'center') {
+        yPos = Math.floor(curHeight / 2);
+      }
+      if (settings.text.customY !== undefined && settings.text.y === undefined) {
+        yPos = settings.text.customY;
+      }
 
       // Escape XML characters
       const escapedText = text
@@ -334,7 +346,7 @@ export class ImageService {
               text-anchor: middle;
             }
           </style>
-          <text x="${Math.floor(curWidth / 2)}" y="${yPos}" class="sticker-text">${escapedText}</text>
+          <text x="${xPos}" y="${yPos}" class="sticker-text">${escapedText}</text>
         </svg>
       `;
 

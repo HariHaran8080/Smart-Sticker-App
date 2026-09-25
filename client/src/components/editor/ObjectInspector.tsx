@@ -54,7 +54,7 @@ export const ObjectInspector: React.FC<ObjectInspectorProps> = ({
     outline: true,
     reflection: false,
     adjust: false,
-    transform: false,
+    transform: true,
   });
 
   const toggleSection = (key: string) => {
@@ -819,6 +819,21 @@ export const ObjectInspector: React.FC<ObjectInspectorProps> = ({
                   }
                   className="w-full accent-brand-500 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
                 />
+                <div className="flex gap-1.5 pt-1.5">
+                  {[0.5, 0.75, 1.0, 1.25, 1.5].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => onUpdateSettings((prev) => ({ ...prev, scale: s }))}
+                      className={`flex-1 py-1 text-[10px] font-semibold rounded border transition-colors ${
+                        Math.abs(settings.scale - s) < 0.05
+                          ? 'bg-brand-500 text-zinc-950 border-brand-500'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      {Math.round(s * 100)}%
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Rotation Slider */}
