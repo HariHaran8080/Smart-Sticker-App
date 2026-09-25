@@ -48,6 +48,7 @@ app.use(
       const normalizedOrigin = origin.replace(/\/$/, '');
       const isAllowed =
         allowedOrigins.includes(normalizedOrigin) ||
+        normalizedOrigin.endsWith('.vercel.app') ||
         (ENV.NODE_ENV !== 'production' &&
           (normalizedOrigin.includes('localhost') || normalizedOrigin.includes('127.0.0.1')));
 
@@ -59,6 +60,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 
