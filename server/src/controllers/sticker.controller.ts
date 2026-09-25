@@ -47,9 +47,17 @@ export const createStickerSchema = z.object({
           fontSize: z.number().default(32),
           color: z.string().default('#ffffff'),
           bold: z.boolean().default(true),
-          align: z.enum(['top', 'center', 'bottom']).default('bottom'),
+          align: z.enum(['top', 'center', 'bottom', 'custom']).default('bottom'),
+          x: z.number().optional(),
+          y: z.number().optional(),
+          fontFamily: z.string().optional(),
+          strokeColor: z.string().optional(),
+          strokeWidth: z.number().optional(),
+          backgroundColor: z.string().optional(),
+          stylePreset: z.string().optional(),
           customY: z.number().optional(),
         })
+        .passthrough()
         .optional(),
       emoji: z
         .object({
@@ -57,10 +65,12 @@ export const createStickerSchema = z.object({
           position: z.enum(['top-left', 'top-right', 'bottom-left', 'bottom-right', 'center']).default('top-right'),
           size: z.number().default(48),
         })
+        .passthrough()
         .optional(),
       exportFormat: z.enum(['png', 'webp']).default('webp'),
       targetSize: z.number().default(512),
     })
+    .passthrough()
     .optional()
     .default({}),
 });

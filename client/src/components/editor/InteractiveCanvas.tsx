@@ -203,7 +203,8 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
     if (settings.text.content && settings.text.content.trim()) {
       ctx.save();
       const fontSize = settings.text.fontSize || 32;
-      ctx.font = `${settings.text.bold ? 'bold ' : ''}${fontSize}px 'Impact', 'Arial Black', sans-serif`;
+      const fontFamily = settings.text.fontFamily || "'Impact', 'Arial Black', sans-serif";
+      ctx.font = `${settings.text.bold ? 'bold ' : ''}${fontSize}px ${fontFamily}`;
       ctx.textAlign = 'center';
 
       let textX = settings.text.x !== undefined ? settings.text.x : size / 2;
@@ -216,11 +217,36 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
         textY = size / 2 + fontSize / 3;
       }
 
+      // Background pill badge if enabled
+      if (settings.text.backgroundColor && settings.text.backgroundColor !== 'none') {
+        ctx.save();
+        const textMetrics = ctx.measureText(settings.text.content);
+        const padX = fontSize * 0.45;
+        const bW = textMetrics.width + padX * 2;
+        const bH = fontSize * 1.35;
+        const bX = textX - bW / 2;
+        const bY = textY - fontSize * 0.95;
+        const r = Math.min(10, bH / 2);
+
+        ctx.fillStyle = settings.text.backgroundColor;
+        if ((ctx as any).roundRect) {
+          (ctx as any).roundRect(bX, bY, bW, bH, r);
+        } else {
+          ctx.rect(bX, bY, bW, bH);
+        }
+        ctx.fill();
+        ctx.restore();
+      }
+
       // Stroke
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = Math.max(3, fontSize * 0.12);
-      ctx.lineJoin = 'round';
-      ctx.strokeText(settings.text.content, textX, textY);
+      const strokeColor = settings.text.strokeColor !== undefined ? settings.text.strokeColor : '#000000';
+      const strokeWidth = settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : Math.max(2, fontSize * 0.12);
+      if (strokeWidth > 0 && strokeColor !== 'transparent') {
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        ctx.lineJoin = 'round';
+        ctx.strokeText(settings.text.content, textX, textY);
+      }
 
       // Fill
       ctx.fillStyle = settings.text.color || '#ffffff';
@@ -585,25 +611,166 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
             </button>
           </div>
 
-          {/* Row 2: Font Size Slider + Presets + Drag anywhere tip */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-zinc-800/80 text-xs">
+          {/* Row 2: Font Family & Style Presets */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] text-zinc-400 font-medium">Size:</span>
-              <input
-                type="range"
-                min="16"
-                max="72"
-                step="2"
-                value={settings.text.fontSize || 32}
+              <span className="text-[11px] text-zinc-400 font-medium">Font:</span>
+              <select
+                value={settings.text.fontFamily || "'Impact', 'Arial Black', sans-serif"}
                 onChange={(e) =>
                   onUpdateSettings((prev) => ({
                     ...prev,
-                    text: { ...prev.text, fontSize: Number(e.target.value) },
+                    text: { ...prev.text, fontFamily: e.target.value },
                   }))
                 }
-                className="w-24 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
-              />
-              <span className="text-[11px] font-mono text-amber-400">{settings.text.fontSize || 32}px</span>
+                className="bg-zinc-800 border border-zinc-700 text-xs text-zinc-200 rounded-lg px-2 py-1 focus:outline-none focus:border-amber-400"
+              >
+                <option value="'Impact', 'Arial Black', sans-serif">Impact (Meme)</option>
+                <option value="'Arial Black', sans-serif">Arial Black (Bold)</option>
+                <option value="'Comic Sans MS', cursive">Comic (Playful)</option>
+                <option value="'Trebuchet MS', sans-serif">Trebuchet (Modern)</option>
+                <option value="'Georgia', serif">Georgia (Serif)</option>
+                <option value="'Courier New', monospace">Courier (Typewriter)</option>
+              </select>
+            </div>
+
+            {/* Quick 1-click Style Presets */}
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-zinc-400 mr-0.5">Style:</span>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: {
+                      ...prev.text,
+                      color: '#ffffff',
+                      strokeColor: '#000000',
+                      strokeWidth: 4,
+                      backgroundColor: 'none',
+                      fontFamily: "'Impact', 'Arial Black', sans-serif",
+                      bold: true,
+                    },
+                  }))
+                }
+                className="px-2 py-0.5 text-[10px] font-bold bg-zinc-800 hover:bg-zinc-700 text-white rounded border border-zinc-700 transition-colors"
+                title="Classic White on Black Meme text"
+              >
+                Meme
+              </button>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: {
+                      ...prev.text,
+                      color: '#00f0ff',
+                      strokeColor: '#003b46',
+                      strokeWidth: 3,
+                      backgroundColor: 'rgba(0,0,0,0.65)',
+                      fontFamily: "'Trebuchet MS', sans-serif",
+                      bold: true,
+                    },
+                  }))
+                }
+                className="px-2 py-0.5 text-[10px] font-bold bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 rounded border border-cyan-800 transition-colors"
+                title="Neon Cyan glow with translucent pill"
+              >
+                Neon
+              </button>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: {
+                      ...prev.text,
+                      color: '#fde047',
+                      strokeColor: '#b91c1c',
+                      strokeWidth: 4,
+                      backgroundColor: 'none',
+                      fontFamily: "'Comic Sans MS', cursive",
+                      bold: true,
+                    },
+                  }))
+                }
+                className="px-2 py-0.5 text-[10px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 rounded border border-amber-800 transition-colors"
+                title="Comic Pop yellow with red outline"
+              >
+                Comic
+              </button>
+              <button
+                onClick={() =>
+                  onUpdateSettings((prev) => ({
+                    ...prev,
+                    text: {
+                      ...prev.text,
+                      color: '#ffffff',
+                      strokeColor: 'transparent',
+                      strokeWidth: 0,
+                      backgroundColor: 'rgba(0,0,0,0.75)',
+                      fontFamily: "'Arial Black', sans-serif",
+                    },
+                  }))
+                }
+                className="px-2 py-0.5 text-[10px] font-bold bg-zinc-800 hover:bg-zinc-700 text-brand-300 rounded border border-brand-500/40 transition-colors"
+                title="Studio Pill badge backdrop"
+              >
+                Pill Badge
+              </button>
+            </div>
+          </div>
+
+          {/* Row 3: Size, Stroke, and Position */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-zinc-800/80 text-xs">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-zinc-400 font-medium">Size:</span>
+                <input
+                  type="range"
+                  min="16"
+                  max="72"
+                  step="2"
+                  value={settings.text.fontSize || 32}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, fontSize: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-20 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                />
+                <span className="text-[11px] font-mono text-amber-400 min-w-[28px]">{settings.text.fontSize || 32}px</span>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-zinc-400 font-medium">Outline:</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  step="1"
+                  value={settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : 3}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, strokeWidth: Number(e.target.value) },
+                    }))
+                  }
+                  className="w-16 accent-amber-400 bg-zinc-800 h-1.5 rounded-lg appearance-none cursor-pointer"
+                  title="Stroke width"
+                />
+                <input
+                  type="color"
+                  value={settings.text.strokeColor || '#000000'}
+                  onChange={(e) =>
+                    onUpdateSettings((prev) => ({
+                      ...prev,
+                      text: { ...prev.text, strokeColor: e.target.value },
+                    }))
+                  }
+                  className="w-5 h-5 rounded cursor-pointer bg-transparent shrink-0"
+                  title="Outline color"
+                />
+              </div>
             </div>
 
             <div className="flex items-center gap-1">
@@ -654,8 +821,32 @@ export const InteractiveCanvas: React.FC<InteractiveCanvasProps> = ({
               )}
             </div>
           </div>
-          <div className="text-[10px] text-amber-300/80 flex items-center gap-1">
+
+          <div className="text-[10px] text-amber-300/80 flex items-center justify-between pt-1 border-t border-zinc-800/40">
             <span>💡 Tip: Click and drag the text anywhere directly on the image!</span>
+            <button
+              onClick={() =>
+                onUpdateSettings((prev) => ({
+                  ...prev,
+                  text: {
+                    ...prev.text,
+                    backgroundColor:
+                      prev.text.backgroundColor && prev.text.backgroundColor !== 'none'
+                        ? 'none'
+                        : 'rgba(0,0,0,0.75)',
+                  },
+                }))
+              }
+              className={`px-2 py-0.5 text-[10px] rounded border transition-colors ${
+                settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                  ? 'bg-zinc-800 border-amber-400 text-amber-300'
+                  : 'bg-zinc-900 border-zinc-700 text-zinc-400 hover:text-white'
+              }`}
+            >
+              {settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+                ? 'Pill Backdrop: On'
+                : 'Pill Backdrop: Off'}
+            </button>
           </div>
         </div>
       )}

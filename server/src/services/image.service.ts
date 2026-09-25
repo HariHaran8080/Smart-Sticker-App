@@ -332,20 +332,30 @@ export class ImageService {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&apos;');
 
+      const font = settings.text.fontFamily || "'Impact', 'Arial Black', -apple-system, sans-serif";
+      const strokeColor = settings.text.strokeColor !== undefined ? settings.text.strokeColor : '#000000';
+      const strokeWidth = settings.text.strokeWidth !== undefined ? settings.text.strokeWidth : Math.max(2, Math.round(fontSize * 0.1));
+
+      const bgPill =
+        settings.text.backgroundColor && settings.text.backgroundColor !== 'none'
+          ? `<rect x="${xPos - Math.round(escapedText.length * fontSize * 0.32)}" y="${yPos - fontSize * 0.85}" width="${Math.round(escapedText.length * fontSize * 0.65)}" height="${Math.round(fontSize * 1.25)}" rx="${Math.round(fontSize * 0.3)}" fill="${settings.text.backgroundColor}" />`
+          : '';
+
       const svgText = `
         <svg width="${curWidth}" height="${curHeight}" xmlns="http://www.w3.org/2000/svg">
           <style>
             .sticker-text {
-              font-family: 'Impact', 'Arial Black', -apple-system, sans-serif;
+              font-family: ${font};
               font-size: ${fontSize}px;
               font-weight: ${fontWeight};
               fill: ${textColor};
-              stroke: #000000;
-              stroke-width: ${Math.max(2, Math.round(fontSize * 0.1))}px;
+              stroke: ${strokeColor};
+              stroke-width: ${strokeWidth}px;
               paint-order: stroke fill;
               text-anchor: middle;
             }
           </style>
+          ${bgPill}
           <text x="${xPos}" y="${yPos}" class="sticker-text">${escapedText}</text>
         </svg>
       `;

@@ -35,6 +35,11 @@ export interface IStickerSettings {
     align: 'top' | 'center' | 'bottom' | 'custom';
     x?: number;
     y?: number;
+    fontFamily?: string;
+    strokeColor?: string;
+    strokeWidth?: number;
+    backgroundColor?: string;
+    stylePreset?: string;
     customY?: number;
   };
   emoji?: {
